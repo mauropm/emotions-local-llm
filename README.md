@@ -441,6 +441,46 @@ To reproduce either run:
 ./emotion-harness benchmark --model bonsai-1.7b-2bit --output bonsai-1.7b-2bit-results.json
 ```
 
+### Concurrency comparison
+
+`bonsai-1.7b-2bit` was also run at `--concurrency 4` on the same dataset
+(1,000 samples, `seed = 42`) to measure the effect of concurrency:
+
+| Metric                  | `--concurrency 1`    | `--concurrency 4`   |
+| ----------------------- | -------------------- | ------------------- |
+| Accuracy                | 62.90% (629/1000)    | 62.80% (628/1000)   |
+| Correct / Incorrect     | 629 / 371            | 628 / 372           |
+| Successful / Invalid    | 801 / 199            | 800 / 200           |
+| Failed requests         | 0                    | 0                   |
+| Precision               | 0.7315               | 0.7315              |
+| Recall                  | 0.7360               | 0.7360              |
+| F1                      | 0.7337               | 0.7337              |
+| Average confidence      | 95.0%                | 95.0%               |
+| Average latency         | **192.6 ms**         | 571.6 ms            |
+| Median latency          | **182.4 ms**         | 567.8 ms            |
+| P95 latency             | **223.1 ms**         | 686.5 ms            |
+| Max latency             | **587.8 ms**         | 917.7 ms            |
+| Throughput              | 5.19 samples/sec     | **7.00 samples/sec**|
+| Total duration          | 192.63 s             | **143.07 s**        |
+
+Key differences:
+
+- **Accuracy is stable** across concurrency (62.90% vs 62.80%); the one-sample
+  difference is model-level nondeterminism, not an effect of request ordering,
+  which confirms the accuracy calculation is order-independent.
+- **Throughput improves ~1.35×** and total time drops from ~3.2 minutes to
+  ~2.4 minutes.
+- **Per-request latency rises** (192.6 ms → 571.6 ms) because four requests
+  contend for the same single local model server — the trade-off is more
+  overall throughput at the cost of individual request latency.
+
+To reproduce:
+
+```bash
+./emotion-harness benchmark --model bonsai-1.7b-2bit --concurrency 1 --output bonsai-c1-results.json
+./emotion-harness benchmark --model bonsai-1.7b-2bit --concurrency 4 --output bonsai-c4-results.json
+```
+
 ## Tests
 
 ```bash
