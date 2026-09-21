@@ -384,6 +384,63 @@ order.
   sleeps are inserted between requests.
 - **Per-emotion accuracy** uses the original `emotion` field from the dataset.
 
+### Model comparison
+
+Two models were benchmarked on the same dataset (1,000 samples, `seed = 42`,
+`--concurrency 1`) on the reference host (Mac Mini M4, 16 GB RAM, rapid-mlx):
+
+| Metric                  | `qwen3.5-4b-6bit`   | `bonsai-1.7b-2bit`  |
+| ----------------------- | ------------------- | ------------------- |
+| Accuracy                | **75.30%** (753/1000) | 62.90% (629/1000) |
+| Correct / Incorrect     | 753 / 247           | 629 / 371           |
+| Successful / Invalid    | 994 / 6             | 801 / 199           |
+| Failed requests         | 0                   | 0                   |
+| Precision               | 0.7071              | **0.7315**          |
+| Recall                  | 0.6734              | **0.7360**          |
+| F1                      | 0.6898              | **0.7337**          |
+| Average confidence      | 85.2%               | 95.0%               |
+| Average latency         | 727.7 ms            | **192.6 ms**        |
+| Median latency          | 702.9 ms            | **182.4 ms**        |
+| P95 latency             | 793.6 ms            | **223.1 ms**        |
+| Max latency             | 1402.3 ms           | **587.8 ms**        |
+| Throughput              | 1.37 samples/sec    | **5.19 samples/sec**|
+| Total duration          | 727.68 s            | **192.63 s**        |
+
+Per-emotion accuracy:
+
+| Emotion | `qwen3.5-4b-6bit` | `bonsai-1.7b-2bit` |
+| ------- | ----------------- | ------------------ |
+| sadness | 81.5%             | 67.5%              |
+| joy     | 70.5%             | 61.5%              |
+| love    | 63.5%             | 57.0%              |
+| anger   | 81.5%             | 69.5%              |
+| fear    | 79.5%             | 59.0%              |
+
+Key differences:
+
+- **Speed:** `bonsai-1.7b-2bit` is about **3.8× faster** (192.6 ms vs 727.7 ms
+  average latency) and delivers about **3.8× the throughput** (5.19 vs 1.37
+  samples/sec), finishing the 1,000-sample run in ~3.2 minutes instead of ~12.1
+  minutes.
+- **Accuracy:** `qwen3.5-4b-6bit` is about **12.4 percentage points more
+  accurate** end-to-end (75.30% vs 62.90%).
+- **Strict-JSON compliance:** most of that accuracy gap comes from invalid
+  responses. `bonsai-1.7b-2bit` returned unparseable output **199 times** versus
+  only **6** for `qwen3.5-4b-6bit`; invalid responses count as incorrect, so
+  they directly lower accuracy.
+- **Among valid predictions only,** `bonsai-1.7b-2bit` actually has a slightly
+  higher F1 (0.7337 vs 0.6898) — it classifies well when it answers correctly,
+  but fails the output-format contract much more often.
+- **Confidence calibration:** `bonsai-1.7b-2bit` reports a higher average
+  confidence (95.0%) despite lower accuracy, i.e. it is more overconfident.
+
+To reproduce either run:
+
+```bash
+./emotion-harness benchmark --model qwen3.5-4b-6bit  --output qwen35-4b-results.json
+./emotion-harness benchmark --model bonsai-1.7b-2bit --output bonsai-1.7b-2bit-results.json
+```
+
 ## Tests
 
 ```bash
