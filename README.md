@@ -28,7 +28,7 @@ benchmark a built-in dataset with concurrency, JSON, and CSV reporting.
 ## Starting the local model server
 
 This harness does not bundle or manage the model server; it only assumes an
-OpenAI-compatible HTTP API. Start whatever server hosts `qwen3.5-4b-6bit`
+OpenAI-compatible HTTP API. Start whatever server hosts `bonsai-1.7b-2bit`
 (for example an MLX/vLLM/llama.cpp server configured for OpenAI-compatible
 chat completions) so that it listens on:
 
@@ -44,11 +44,11 @@ curl http://127.0.0.1:8000/v1/models
 
 ## Reference environment
 
-The benchmarks in this repository were run against a local model served with
-**rapid-mlx** ([https://rapidmlx.com/](https://rapidmlx.com/)) on:
+The harness is used against a local model served with **rapid-mlx**
+([https://rapidmlx.com/](https://rapidmlx.com/)) on:
 
 ```text
-Model:  qwen3.5-4b-6bit
+Model:  bonsai-1.7b-2bit
 Server: rapid-mlx (OpenAI-compatible, http://127.0.0.1:8000/v1)
 Host:   Mac Mini M4, 16 GB RAM
 ```
@@ -70,7 +70,7 @@ go build -o emotion-harness .
 | Variable         | Default                          | Description                          |
 | ---------------- | -------------------------------- | ------------------------------------ |
 | `MODEL_BASE_URL` | `http://127.0.0.1:8000/v1`        | OpenAI-compatible base URL           |
-| `MODEL_NAME`     | `qwen3.5-4b-6bit`                 | Model name sent in requests          |
+| `MODEL_NAME`     | `bonsai-1.7b-2bit`                 | Model name sent in requests          |
 | `MODEL_TIMEOUT`  | `60s`                             | HTTP timeout (Go duration syntax)    |
 | `OPENAI_API_KEY` | *(unset)*                         | Optional bearer token; omitted if unset |
 
@@ -124,7 +124,7 @@ make benchmark
 Emotion Classification Benchmark
 ================================
 
-Model: qwen3.5-4b-6bit
+Model: bonsai-1.7b-2bit
 Endpoint: http://127.0.0.1:8000/v1
 
 Samples: 20
@@ -180,7 +180,7 @@ Requests/sec: 14.08
 
 ```json
 {
-  "model": "qwen3.5-4b-6bit",
+  "model": "bonsai-1.7b-2bit",
   "endpoint": "http://127.0.0.1:8000/v1",
   "samples": 20,
   "correct": 19,
@@ -306,7 +306,7 @@ fails before sending a single request.
 
 ```bash
 ./emotion-harness benchmark \
-  --model qwen3.5-4b-6bit
+  --model bonsai-1.7b-2bit
 ```
 
 ### Custom endpoint
@@ -352,7 +352,7 @@ status counts, and per-sentiment/per-emotion breakdowns. This makes runs easy
 to diff across models:
 
 ```bash
-./emotion-harness benchmark --model qwen3.5-4b-6bit --output qwen35-4b-results.json
+./emotion-harness benchmark --model bonsai-1.7b-2bit --output bonsai-1.7b-2bit-results.json
 ./emotion-harness benchmark --model another-local-model --output another-model-results.json
 ```
 
