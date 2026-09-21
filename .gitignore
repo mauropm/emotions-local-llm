@@ -1,0 +1,11 @@
+# Compiled binary
+/emotion-harness
+
+# Dataset generation cache (regenerable via `make generate-dataset`)
+/data/.cache/
+
+# Local benchmark run outputs
+/results/
+
+# macOS
+.DS_Store
