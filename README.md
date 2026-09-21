@@ -565,3 +565,7 @@ data/                generated benchmark dataset
 
 This project was made possible thanks to **opencode go + deepseek v4.1 flash**.
 
+## License
+
+Released under the [MIT License](LICENSE).
+
