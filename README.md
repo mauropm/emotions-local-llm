@@ -45,7 +45,7 @@ curl http://127.0.0.1:8000/v1/models
 ## Reference environment
 
 The benchmarks in this repository were run against a local model served with
-**rapid-mlx** on:
+**rapid-mlx** ([https://rapidmlx.com/](https://rapidmlx.com/)) on:
 
 ```text
 Model:  qwen3.5-4b-6bit
