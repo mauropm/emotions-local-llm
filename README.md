@@ -490,26 +490,31 @@ To reproduce:
 
 ### LFM2.5 concurrency scaling
 
-`lfm2.5-1b-4bit` was run at `--concurrency 1`, `8`, and `16` on the same
-dataset (1,000 samples, `seed = 42`) to measure how concurrency improves
+`lfm2.5-1b-4bit` was run at `--concurrency 1`, `8`, `16`, `32`, and `64` on the
+same dataset (1,000 samples, `seed = 42`) to measure how concurrency improves
 throughput (samples per second):
 
 | Concurrency | Samples/sec | Speedup vs 1 | Total duration | Average latency | Accuracy |
 | ----------- | ----------- | ------------ | -------------- | --------------- | -------- |
 | 1           | 3.8         | 1.00×        | 264.40 s       | 264.4 ms        | 72.40%   |
 | 8           | 4.7         | 1.24×        | 212.23 s       | 1697.6 ms       | 72.20%   |
-| 16          | 5.5         | **1.45×**    | **181.29 s**   | 2893.1 ms       | 72.10%   |
+| 16          | 5.5         | 1.45×        | 181.29 s       | 2893.1 ms       | 72.10%   |
+| 32          | **6.9**     | **1.82×**    | **145.25 s**   | 4626.9 ms       | 71.90%   |
+| 64          | 5.4         | 1.42×        | 185.07 s       | 11719.2 ms      | 72.20%   |
 
 Notes:
 
-- Throughput grows with concurrency but with steep diminishing returns: about
-  **1.24×** at concurrency 8 and **1.45×** at concurrency 16.
-- Total benchmark time falls from 264.40 s to 181.29 s.
-- Per-request latency scales almost linearly (264.4 ms → 1697.6 ms →
-  2893.1 ms), showing the single local server is the bottleneck — requests are
-  largely serialized.
-- Accuracy stays essentially constant (72.40% → 72.20% → 72.10%), confirming
-  the statistics are order-independent.
+- Throughput improves with concurrency up to a point: about **1.24×** at 8,
+  **1.45×** at 16, and a peak of **1.82×** at 32 samples/sec.
+- Beyond that it **regresses**: at concurrency 64 throughput falls back to
+  5.4 samples/sec (1.42×) and total time rises to 185.07 s, so **concurrency 32
+  is the sweet spot** for this model/server — oversubscribing adds contention
+  overhead with no gain.
+- Per-request latency grows super-linearly (264.4 ms → 1697.6 ms → 2893.1 ms →
+  4626.9 ms → 11719.2 ms), confirming the single local server is the bottleneck
+  and requests are largely serialized.
+- Accuracy stays essentially constant (72.40% → 72.20% → 72.10% → 71.90% →
+  72.20%), confirming the statistics are order-independent.
 
 To reproduce:
 
@@ -517,6 +522,8 @@ To reproduce:
 ./emotion-harness benchmark --model lfm2.5-1b-4bit --concurrency 1  --output lfm25-c1-results.json
 ./emotion-harness benchmark --model lfm2.5-1b-4bit --concurrency 8  --output lfm25-c8-results.json
 ./emotion-harness benchmark --model lfm2.5-1b-4bit --concurrency 16 --output lfm25-c16-results.json
+./emotion-harness benchmark --model lfm2.5-1b-4bit --concurrency 32 --output lfm25-c32-results.json
+./emotion-harness benchmark --model lfm2.5-1b-4bit --concurrency 64 --output lfm25-c64-results.json
 ```
 
 ## Tests
