@@ -14,7 +14,7 @@ import (
 // Default configuration values for the local OpenAI-compatible endpoint.
 const (
 	DefaultBaseURL = "http://127.0.0.1:8000/v1"
-	DefaultModel   = "bonsai-1.7b-2bit"
+	DefaultModel   = "lfm2.5-1b-4bit"
 	DefaultTimeout = 60 * time.Second
 
 	// maxResponseBytes bounds how much of a response body we read.

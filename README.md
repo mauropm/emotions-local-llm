@@ -28,7 +28,7 @@ benchmark a built-in dataset with concurrency, JSON, and CSV reporting.
 ## Starting the local model server
 
 This harness does not bundle or manage the model server; it only assumes an
-OpenAI-compatible HTTP API. Start whatever server hosts `bonsai-1.7b-2bit`
+OpenAI-compatible HTTP API. Start whatever server hosts `lfm2.5-1b-4bit`
 (for example an MLX/vLLM/llama.cpp server configured for OpenAI-compatible
 chat completions) so that it listens on:
 
@@ -48,7 +48,7 @@ The harness is used against a local model served with **rapid-mlx**
 ([https://rapidmlx.com/](https://rapidmlx.com/)) on:
 
 ```text
-Model:  bonsai-1.7b-2bit
+Model:  lfm2.5-1b-4bit
 Server: rapid-mlx (OpenAI-compatible, http://127.0.0.1:8000/v1)
 Host:   Mac Mini M4, 16 GB RAM
 ```
@@ -70,7 +70,7 @@ go build -o emotion-harness .
 | Variable         | Default                          | Description                          |
 | ---------------- | -------------------------------- | ------------------------------------ |
 | `MODEL_BASE_URL` | `http://127.0.0.1:8000/v1`        | OpenAI-compatible base URL           |
-| `MODEL_NAME`     | `bonsai-1.7b-2bit`                 | Model name sent in requests          |
+| `MODEL_NAME`     | `lfm2.5-1b-4bit`                 | Model name sent in requests          |
 | `MODEL_TIMEOUT`  | `60s`                             | HTTP timeout (Go duration syntax)    |
 | `OPENAI_API_KEY` | *(unset)*                         | Optional bearer token; omitted if unset |
 
@@ -124,7 +124,7 @@ make benchmark
 Emotion Classification Benchmark
 ================================
 
-Model: bonsai-1.7b-2bit
+Model: lfm2.5-1b-4bit
 Endpoint: http://127.0.0.1:8000/v1
 
 Samples: 20
@@ -180,7 +180,7 @@ Requests/sec: 14.08
 
 ```json
 {
-  "model": "bonsai-1.7b-2bit",
+  "model": "lfm2.5-1b-4bit",
   "endpoint": "http://127.0.0.1:8000/v1",
   "samples": 20,
   "correct": 19,
@@ -306,7 +306,7 @@ fails before sending a single request.
 
 ```bash
 ./emotion-harness benchmark \
-  --model bonsai-1.7b-2bit
+  --model lfm2.5-1b-4bit
 ```
 
 ### Custom endpoint
@@ -352,7 +352,7 @@ status counts, and per-sentiment/per-emotion breakdowns. This makes runs easy
 to diff across models:
 
 ```bash
-./emotion-harness benchmark --model bonsai-1.7b-2bit --output bonsai-1.7b-2bit-results.json
+./emotion-harness benchmark --model lfm2.5-1b-4bit --output lfm25-1b-4bit-results.json
 ./emotion-harness benchmark --model another-local-model --output another-model-results.json
 ```
 
@@ -386,59 +386,66 @@ order.
 
 ### Model comparison
 
-Two models were benchmarked on the same dataset (1,000 samples, `seed = 42`,
-`--concurrency 1`) on the reference host (Mac Mini M4, 16 GB RAM, rapid-mlx):
+Three models were benchmarked on the same dataset (1,000 samples,
+`seed = 42`, `--concurrency 1`) on the reference host (Mac Mini M4, 16 GB RAM,
+rapid-mlx):
 
-| Metric                  | `qwen3.5-4b-6bit`   | `bonsai-1.7b-2bit`  |
-| ----------------------- | ------------------- | ------------------- |
-| Accuracy                | **75.30%** (753/1000) | 62.90% (629/1000) |
-| Correct / Incorrect     | 753 / 247           | 629 / 371           |
-| Successful / Invalid    | 994 / 6             | 801 / 199           |
-| Failed requests         | 0                   | 0                   |
-| Precision               | 0.7071              | **0.7315**          |
-| Recall                  | 0.6734              | **0.7360**          |
-| F1                      | 0.6898              | **0.7337**          |
-| Average confidence      | 85.2%               | 95.0%               |
-| Average latency         | 727.7 ms            | **192.6 ms**        |
-| Median latency          | 702.9 ms            | **182.4 ms**        |
-| P95 latency             | 793.6 ms            | **223.1 ms**        |
-| Max latency             | 1402.3 ms           | **587.8 ms**        |
-| Throughput              | 1.37 samples/sec    | **5.19 samples/sec**|
-| Total duration          | 727.68 s            | **192.63 s**        |
+| Metric                  | `qwen3.5-4b-6bit`     | `bonsai-1.7b-2bit`    | `lfm2.5-1b-4bit`      |
+| ----------------------- | --------------------- | --------------------- | --------------------- |
+| Accuracy                | **75.30%** (753/1000) | 62.90% (629/1000)     | 72.40% (724/1000)     |
+| Correct / Incorrect     | 753 / 247             | 629 / 371             | 724 / 276             |
+| Successful / Invalid    | 994 / 6               | 801 / 199             | 997 / 3               |
+| Failed requests         | 0                     | 0                     | 0                     |
+| Precision               | 0.7071                | **0.7315**            | 0.6165                |
+| Recall                  | 0.6734                | 0.7360                | **0.8400**            |
+| F1                      | 0.6898                | **0.7337**            | 0.7111                |
+| Average confidence      | 85.2%                 | 95.0%                 | 95.0%                 |
+| Average latency         | 727.7 ms              | **192.6 ms**          | 264.4 ms              |
+| Median latency          | 702.9 ms              | **182.4 ms**          | 259.9 ms              |
+| P95 latency             | 793.6 ms              | **223.1 ms**          | 280.4 ms              |
+| Max latency             | 1402.3 ms             | 587.8 ms              | **468.9 ms**          |
+| Throughput              | 1.37 samples/sec      | **5.19 samples/sec**  | 3.8 samples/sec       |
+| Total duration          | 727.68 s              | **192.63 s**          | 264.40 s              |
 
 Per-emotion accuracy:
 
-| Emotion | `qwen3.5-4b-6bit` | `bonsai-1.7b-2bit` |
-| ------- | ----------------- | ------------------ |
-| sadness | 81.5%             | 67.5%              |
-| joy     | 70.5%             | 61.5%              |
-| love    | 63.5%             | 57.0%              |
-| anger   | 81.5%             | 69.5%              |
-| fear    | 79.5%             | 59.0%              |
+| Emotion | `qwen3.5-4b-6bit` | `bonsai-1.7b-2bit` | `lfm2.5-1b-4bit` |
+| ------- | ----------------- | ------------------ | ---------------- |
+| sadness | 81.5%             | 67.5%              | 65.0%            |
+| joy     | 70.5%             | 61.5%              | 83.5%            |
+| love    | 63.5%             | 57.0%              | 84.5%            |
+| anger   | 81.5%             | 69.5%              | 68.0%            |
+| fear    | 79.5%             | 59.0%              | 61.0%            |
 
 Key differences:
 
-- **Speed:** `bonsai-1.7b-2bit` is about **3.8× faster** (192.6 ms vs 727.7 ms
-  average latency) and delivers about **3.8× the throughput** (5.19 vs 1.37
-  samples/sec), finishing the 1,000-sample run in ~3.2 minutes instead of ~12.1
-  minutes.
-- **Accuracy:** `qwen3.5-4b-6bit` is about **12.4 percentage points more
-  accurate** end-to-end (75.30% vs 62.90%).
-- **Strict-JSON compliance:** most of that accuracy gap comes from invalid
-  responses. `bonsai-1.7b-2bit` returned unparseable output **199 times** versus
-  only **6** for `qwen3.5-4b-6bit`; invalid responses count as incorrect, so
-  they directly lower accuracy.
-- **Among valid predictions only,** `bonsai-1.7b-2bit` actually has a slightly
-  higher F1 (0.7337 vs 0.6898) — it classifies well when it answers correctly,
-  but fails the output-format contract much more often.
-- **Confidence calibration:** `bonsai-1.7b-2bit` reports a higher average
-  confidence (95.0%) despite lower accuracy, i.e. it is more overconfident.
+- **Speed:** `bonsai-1.7b-2bit` is the fastest (~3.8× faster than
+  `qwen3.5-4b-6bit`: 192.6 ms vs 727.7 ms average latency, 5.19 vs 1.37
+  samples/sec), while `lfm2.5-1b-4bit` sits in between at 264.4 ms / 3.8
+  samples/sec.
+- **Accuracy:** `qwen3.5-4b-6bit` is the most accurate end-to-end (75.30%),
+  followed closely by `lfm2.5-1b-4bit` (72.40%), then `bonsai-1.7b-2bit`
+  (62.90%).
+- **Strict-JSON compliance:** `lfm2.5-1b-4bit` (3 invalid responses) and
+  `qwen3.5-4b-6bit` (6) respect the output contract, whereas
+  `bonsai-1.7b-2bit` returned unparseable output **199 times**. Invalid
+  responses count as incorrect, so this drives much of bonsai's accuracy gap.
+- **Among valid predictions only,** `bonsai-1.7b-2bit` has the highest F1
+  (0.7337), slightly ahead of `lfm2.5-1b-4bit` (0.7111) and
+  `qwen3.5-4b-6bit` (0.6898).
+- **Class bias:** `lfm2.5-1b-4bit` leans strongly toward `positive`
+  (recall 0.8400 but precision 0.6165), whereas `qwen3.5-4b-6bit` is more
+  balanced (precision 0.7071 / recall 0.6734).
+- **Confidence calibration:** both `bonsai-1.7b-2bit` and `lfm2.5-1b-4bit`
+  report ~95% average confidence despite lower accuracy than
+  `qwen3.5-4b-6bit` (85.2%), i.e. they are more overconfident.
 
-To reproduce either run:
+To reproduce each run:
 
 ```bash
 ./emotion-harness benchmark --model qwen3.5-4b-6bit  --output qwen35-4b-results.json
 ./emotion-harness benchmark --model bonsai-1.7b-2bit --output bonsai-1.7b-2bit-results.json
+./emotion-harness benchmark --model lfm2.5-1b-4bit  --output lfm25-1b-4bit-results.json
 ```
 
 ### Concurrency comparison
@@ -479,6 +486,37 @@ To reproduce:
 ```bash
 ./emotion-harness benchmark --model bonsai-1.7b-2bit --concurrency 1 --output bonsai-c1-results.json
 ./emotion-harness benchmark --model bonsai-1.7b-2bit --concurrency 4 --output bonsai-c4-results.json
+```
+
+### LFM2.5 concurrency scaling
+
+`lfm2.5-1b-4bit` was run at `--concurrency 1`, `8`, and `16` on the same
+dataset (1,000 samples, `seed = 42`) to measure how concurrency improves
+throughput (samples per second):
+
+| Concurrency | Samples/sec | Speedup vs 1 | Total duration | Average latency | Accuracy |
+| ----------- | ----------- | ------------ | -------------- | --------------- | -------- |
+| 1           | 3.8         | 1.00×        | 264.40 s       | 264.4 ms        | 72.40%   |
+| 8           | 4.7         | 1.24×        | 212.23 s       | 1697.6 ms       | 72.20%   |
+| 16          | 5.5         | **1.45×**    | **181.29 s**   | 2893.1 ms       | 72.10%   |
+
+Notes:
+
+- Throughput grows with concurrency but with steep diminishing returns: about
+  **1.24×** at concurrency 8 and **1.45×** at concurrency 16.
+- Total benchmark time falls from 264.40 s to 181.29 s.
+- Per-request latency scales almost linearly (264.4 ms → 1697.6 ms →
+  2893.1 ms), showing the single local server is the bottleneck — requests are
+  largely serialized.
+- Accuracy stays essentially constant (72.40% → 72.20% → 72.10%), confirming
+  the statistics are order-independent.
+
+To reproduce:
+
+```bash
+./emotion-harness benchmark --model lfm2.5-1b-4bit --concurrency 1  --output lfm25-c1-results.json
+./emotion-harness benchmark --model lfm2.5-1b-4bit --concurrency 8  --output lfm25-c8-results.json
+./emotion-harness benchmark --model lfm2.5-1b-4bit --concurrency 16 --output lfm25-c16-results.json
 ```
 
 ## Tests
